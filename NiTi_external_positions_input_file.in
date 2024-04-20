@@ -1,0 +1,41 @@
+units         metal
+dimension    3
+boundary    p    p    p
+atom_style    atomic
+read_data "atoms_positions.data"
+
+# -------------------- INTERATOMIC POTENTIAL -------------------------
+
+pair_style    meam
+pair_coeff    * * NiTi.library.meam Ni Ti NiTi.meam Ni Ti
+
+############################ EQUILIBRATION ############################
+
+reset_timestep 0
+timestep 0.005     #5fs = 0.005ps
+
+minimize 1e-6 1e-8 10000 100000
+dump min all custom 1000 ideal_NiTi_B2_temperaturesK.txt id x y z
+dump_modify min pbc yes sort id
+
+dump 4a all custom 50 dump.NiTi_temperaturesK.* id type x y z fx fy fz
+dump_modify 4a pbc yes sort id
+
+##################### MD ##########################
+reset_timestep     0
+
+# Set temperature
+velocity all create temperatures 12345 mom yes rot no
+
+reset_timestep     0
+
+fix 3 all nvt temp temperatures.0 temperatures.0 0.01
+
+# Setting thermo
+thermo 250
+
+# Run
+run     2000
+
+# SIMULATION DONE
+print "All done"
